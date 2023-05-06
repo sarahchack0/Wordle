@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
 import {colors, CLEAR, ENTER} from './src/constants'
 import KeyBoard from './src/components/Keyboard'
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const NUMBER_OF_TRIES = 6;
 
@@ -25,7 +26,8 @@ export default function App() {
   // rows is array of row
   // row contains empty cells
 
-  const getCellBGColor = (letter, row, col) => {
+  const getCellBGColor = (row, col) => {
+    const letter = rows[row][col];
     if (row >= curRow) {
       return colors.black;
     }
@@ -69,6 +71,17 @@ export default function App() {
     
   }
 
+  const getAllLettersWithColor = (color) => 
+  {
+    return rows.flatMap((row, i) => 
+    row.filter((cell,j) => getCellBGColor(i, j) === color)
+    );
+  }
+  
+  const greenCaps = getAllLettersWithColor(colors.primary);
+  const yellowCaps = getAllLettersWithColor(colors.secondary);
+  const greyCaps = getAllLettersWithColor(colors.darkgrey);
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -78,7 +91,7 @@ export default function App() {
         {rows.map((row, i)=> (
           <View key={`row-${i}`} style={styles.row}>
           {row.map((letter, j) => (
-          <View key={`cell-${i}-${j}`}style={[styles.cell, {borderColor: isCellActive(i, j) ? colors.grey: colors.darkgrey, backgroundColor: getCellBGColor(letter, i, j)}]}> 
+          <View key={`cell-${i}-${j}`}style={[styles.cell, {borderColor: isCellActive(i, j) ? colors.grey: colors.darkgrey, backgroundColor: getCellBGColor(i, j)}]}> 
           <Text style={styles.cellText}>{letter.toUpperCase()}</Text>
           </View>
           ))}
@@ -88,7 +101,11 @@ export default function App() {
           
         
       </ScrollView>
-      <KeyBoard onKeyPressed={onKeyPressed}/>
+      <KeyBoard onKeyPressed={onKeyPressed} 
+      greenCaps={greenCaps} 
+      yellowCaps={yellowCaps} 
+      greyCaps={greyCaps}/>
+      
     </SafeAreaView>
   );
 }
