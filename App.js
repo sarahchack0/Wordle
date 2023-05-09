@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
-import {colors, CLEAR, ENTER} from './src/constants'
+import { StyleSheet, Text, View, SafeAreaView, ScrollView, Alert } from 'react-native';
+import {colors, CLEAR, ENTER, colorsToEmoji} from './src/constants'
 import KeyBoard from './src/components/Keyboard'
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import * as Clipboard from 'expo-clipboard';
 
 const NUMBER_OF_TRIES = 6;
 
@@ -19,6 +20,42 @@ export default function App() {
   const [rows, setRows] = useState(new Array(NUMBER_OF_TRIES).fill(new Array(letters.length).fill('')));
   const [curRow, setCurRow] = useState(0);
   const [curCol, setCurCol] = useState(0);
+  const [gameState, setGameState] = useState('playing'); // won, lost, playing
+
+  useEffect(() => {
+    if (curRow > 0) {
+      checkGameState();
+    }
+  });
+
+  const checkGameState = () => {
+    if (checkIfWon() && gameState !== 'won') {
+      Alert.alert("Hurray", "You won!", [{text: 'Share', onPress: shareScore}])
+      setGameState('won');
+
+    } else if (checkIfLost() && gameState != 'lost') {
+      Alert.alert("Meh", "Try again tomorrow!");
+      setGameState('lost');
+    }
+  }
+
+    const shareScore = () => {
+      const textMap = rows.map((row, i) => row.map((cell, j) => colorsToEmoji[getCellBGColor(i, j)]).join("")
+      ).filter(row => row)
+      .join('\n');
+      const textToShare = `Wordle \n ${textMap}`;
+      Clipboard.setString(textToShare);
+      Alert.alert("Copied successfully", "Share your score on your social media");
+    }
+  const checkIfWon = () => {
+      const row = rows[curRow - 1];
+      return row.every((letter, i) => letter === letters[i]);
+
+  };
+
+  const checkIfLost = () => {
+    return !checkIfWon() && curRow === rows.length;
+  }
 
   const isCellActive = (row, col) => {
     return row === curRow && col === curCol;
@@ -42,7 +79,10 @@ export default function App() {
 
   const onKeyPressed = (key) => {
     const updatedRows = copyArray(rows);
-
+if (gameState !== 'playing')
+{
+  return;
+}
     if (key === CLEAR) {
       const prevCol = curCol - 1;
       if (prevCol >= 0) {
